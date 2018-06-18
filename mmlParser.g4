@@ -29,7 +29,7 @@
 parser grammar mmlParser;
 @parser::header{ package mml; }
 options { tokenVocab = mmlLexer; }
-tokens {MATH, MSQRT }
+tokens {MATH }
 
 document    :   prolog? misc* element misc*;
 
@@ -40,22 +40,42 @@ rcontent     :   chardata?
                  chardata?)+ ;
 
 content     :   chardata?
-                ((fracment|supment|subment|layment|rowment|tokment| element 
+                ((fracment|supment|subment|subsupment|layment
+                  |rootment |sqrtment |rowment|tokment| element 
                   | reference | CDATA | PI | COMMENT)
                  chardata?)* ;
 
-fraccontent:  justWS? (fracment | supment |subment| layment|rowment|tokment| element ) justWS? ;
-                              
+fraccontent:  justWS? (fracment | supment |subment|subsupment
+              |rootment  |sqrtment | layment|rowment|tokment| element ) justWS? ;
+basecontent:  justWS? (fracment | supment |subment|subsupment
+               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
 
-   //Just for now not allowing attributes on my new elements
+subcontent:  justWS? (fracment | supment |subment|subsupment
+               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
 
-supment     : msupStart (fraccontent fraccontent) msupEnd;
+supcontent:  justWS? (fracment | supment |subment|subsupment
+             |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
+                 
+   //Just for now not dealing with attributes on my new elements
+
+supment     : msupStart (basecontent supcontent) msupEnd;
 msupStart   : OPEN MSUP attribute* '>' ;
 msupEnd     : OPEN SLASH MSUP '>' ;
 
-subment     : msubStart (fraccontent fraccontent) msubEnd;
+subment     : msubStart (basecontent subcontent) msubEnd;
 msubStart   : OPEN MSUB attribute* '>' ;
 msubEnd     : OPEN SLASH MSUB '>' ;
+
+subsupment  : msubsupStart (basecontent subcontent supcontent) msubsupEnd;
+msubsupStart :  OPEN MSUBSUP attribute* '>' ;
+msubsupEnd  : OPEN SLASH MSUBSUP '>' ;
+
+sqrtment     : msqrtStart fraccontent msqrtEnd;
+msqrtStart   : OPEN MSQRT attribute* '>' ;
+msqrtEnd     : OPEN SLASH MSQRT '>' ;
+rootment     : mrootStart (fraccontent fraccontent) mrootEnd;
+mrootStart   : OPEN MROOT attribute* '>' ;
+mrootEnd     : OPEN SLASH MROOT '>' ;
 
 
 

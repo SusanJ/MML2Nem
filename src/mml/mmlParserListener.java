@@ -58,6 +58,36 @@ public interface mmlParserListener extends ParseTreeListener {
 	 */
 	void exitFraccontent(mmlParser.FraccontentContext ctx);
 	/**
+	 * Enter a parse tree produced by {@link mmlParser#basecontent}.
+	 * @param ctx the parse tree
+	 */
+	void enterBasecontent(mmlParser.BasecontentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#basecontent}.
+	 * @param ctx the parse tree
+	 */
+	void exitBasecontent(mmlParser.BasecontentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#subcontent}.
+	 * @param ctx the parse tree
+	 */
+	void enterSubcontent(mmlParser.SubcontentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#subcontent}.
+	 * @param ctx the parse tree
+	 */
+	void exitSubcontent(mmlParser.SubcontentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#supcontent}.
+	 * @param ctx the parse tree
+	 */
+	void enterSupcontent(mmlParser.SupcontentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#supcontent}.
+	 * @param ctx the parse tree
+	 */
+	void exitSupcontent(mmlParser.SupcontentContext ctx);
+	/**
 	 * Enter a parse tree produced by {@link mmlParser#supment}.
 	 * @param ctx the parse tree
 	 */
@@ -117,6 +147,96 @@ public interface mmlParserListener extends ParseTreeListener {
 	 * @param ctx the parse tree
 	 */
 	void exitMsubEnd(mmlParser.MsubEndContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#subsupment}.
+	 * @param ctx the parse tree
+	 */
+	void enterSubsupment(mmlParser.SubsupmentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#subsupment}.
+	 * @param ctx the parse tree
+	 */
+	void exitSubsupment(mmlParser.SubsupmentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#msubsupStart}.
+	 * @param ctx the parse tree
+	 */
+	void enterMsubsupStart(mmlParser.MsubsupStartContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#msubsupStart}.
+	 * @param ctx the parse tree
+	 */
+	void exitMsubsupStart(mmlParser.MsubsupStartContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#msubsupEnd}.
+	 * @param ctx the parse tree
+	 */
+	void enterMsubsupEnd(mmlParser.MsubsupEndContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#msubsupEnd}.
+	 * @param ctx the parse tree
+	 */
+	void exitMsubsupEnd(mmlParser.MsubsupEndContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#sqrtment}.
+	 * @param ctx the parse tree
+	 */
+	void enterSqrtment(mmlParser.SqrtmentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#sqrtment}.
+	 * @param ctx the parse tree
+	 */
+	void exitSqrtment(mmlParser.SqrtmentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#msqrtStart}.
+	 * @param ctx the parse tree
+	 */
+	void enterMsqrtStart(mmlParser.MsqrtStartContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#msqrtStart}.
+	 * @param ctx the parse tree
+	 */
+	void exitMsqrtStart(mmlParser.MsqrtStartContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#msqrtEnd}.
+	 * @param ctx the parse tree
+	 */
+	void enterMsqrtEnd(mmlParser.MsqrtEndContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#msqrtEnd}.
+	 * @param ctx the parse tree
+	 */
+	void exitMsqrtEnd(mmlParser.MsqrtEndContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#rootment}.
+	 * @param ctx the parse tree
+	 */
+	void enterRootment(mmlParser.RootmentContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#rootment}.
+	 * @param ctx the parse tree
+	 */
+	void exitRootment(mmlParser.RootmentContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#mrootStart}.
+	 * @param ctx the parse tree
+	 */
+	void enterMrootStart(mmlParser.MrootStartContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#mrootStart}.
+	 * @param ctx the parse tree
+	 */
+	void exitMrootStart(mmlParser.MrootStartContext ctx);
+	/**
+	 * Enter a parse tree produced by {@link mmlParser#mrootEnd}.
+	 * @param ctx the parse tree
+	 */
+	void enterMrootEnd(mmlParser.MrootEndContext ctx);
+	/**
+	 * Exit a parse tree produced by {@link mmlParser#mrootEnd}.
+	 * @param ctx the parse tree
+	 */
+	void exitMrootEnd(mmlParser.MrootEndContext ctx);
 	/**
 	 * Enter a parse tree produced by {@link mmlParser#layment}.
 	 * @param ctx the parse tree

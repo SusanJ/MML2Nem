@@ -85,12 +85,16 @@ STRING      :   '"' ~[<"]* '"'
             ;
 MFRAC       :   'mfrac';
 MSUP        :   'msup';
+MSUBSUP     :   'msubsup' ;
 MSUB        :   'msub';
-LAY         :   'msubsup' ;
+MSQRT       :   'msqrt';
+MROOT       :   'mroot';
+MUNDER      :   'munder';
+LAY         :   'mover'|'munderover';
 ROW         :   'mrow';
-MO          :   'mo' ;
-MN          :   'mn' ;
-MI          :   'mi' ; 
+MO          :   'mo';
+MN          :   'mn';
+MI          :   'mi'; 
 Name        :   NameStartChar NameChar* ;
 S           :   [ \t\r\n]               -> skip ;
 

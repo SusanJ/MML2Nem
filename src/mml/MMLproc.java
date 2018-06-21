@@ -28,12 +28,22 @@ import java.util.regex.Pattern;
 
 import nemdata.Numeric;
 import nemdata.Letter;
+import nemdata.SpecialSymbol;
 
 public class MMLproc extends mmlParserBaseListener {
 
  static String [] fopen =  {"", "?", ",?", ",,?" };
  static String [] fslash = {"", "/", ",/", ",,/" };
  static String [] fclose = {"", "#", ",#", ",,#" };
+
+  //Rule XIV Modifiers [or Limits]
+ static String modOpen = "\"";
+ static String dirUnder = "%";
+ static String dirOver = "%";
+ static String modTerm = "]";
+ 
+
+ static boolean spaceCmprSymbols = true;
 
  static String radical = ">";
  static String indexOfRadical = "<";
@@ -42,12 +52,14 @@ public class MMLproc extends mmlParserBaseListener {
 
  static boolean trace = true;
  static boolean debug = true;
- static boolean deContent = true;
+ static boolean deContent = false;
  static boolean debugTokment = false;
+ static boolean debugLimits = true;
  static boolean debugScripts = false;
  static boolean debugSbase = false;
  static boolean debugSsub = false;
  static boolean debugSsup = false;
+ static boolean addCurlies2Row = false;
  String tag;
  int fracLev = 0;
  int scriptLev = 0;
@@ -55,16 +67,27 @@ public class MMLproc extends mmlParserBaseListener {
  Stack<ParseTree>fracEls = new Stack<ParseTree>();
  Stack<ParseTree>rootEls = new Stack<ParseTree>();
  Stack<ParserRuleContext>scriptsCtx = new Stack<ParserRuleContext>();
+ Stack<ParserRuleContext>modifCtx = new Stack<ParserRuleContext>();
+
  Vocabulary VOCABULARY;
  static String[] ruleNames;
 
 BufferedTokenStream allTokens;
 
+//===================================================
+//             Constructor
+//===================================================
   MMLproc( BufferedTokenStream allTokens ){
    this.allTokens = allTokens;
    this.VOCABULARY = mmlParser.VOCABULARY;
    Letter fake = new Letter( "x", "X" );
+   //String sc = Letter.singleCaps;
+   //String capX = fake.getScUcBrl();
+   //System.out.println( "Single caps hard-wired in Letter: "+sc+
+    //" X: "+capX );
    Letter.makeTable( true );
+   SpecialSymbol alsoFake = new SpecialSymbol( "~", "~" );
+   SpecialSymbol.makeTables();
    //this.ruleNames = mmlParser.getRuleNames();
   }
 //===================================================
@@ -159,12 +182,60 @@ String tagName( String text ){
   System.out.println( "enterElement--WARNING--"+
     "unrecognized MathML element: "+name ); 
 }
+//========================================================
+//   Munder, Mover, and Munderover processing starts here
+//========================================================
+@Override
+ public void enterUnderment(mmlParser.UndermentContext ctx) { 
+  if (trace) System.out.println( " entertUnderment" );
+  modifCtx.push( ctx );
+ }
+     // <munder> base  underscript </munder>
+@Override
+ public void exitUnderment(mmlParser.UndermentContext ctx) { 
+  if (trace) System.out.println( " exitUnderment" );
+  int cnt = ctx.getChildCount();
+  if (debugLimits){
+   System.out.println( "exitUnder--no. of children: "+cnt );
+  }
+  if (ctx == modifCtx.peek()){
+   if (debugLimits) System.out.println( "munder context match!" );
+  } else {
+   System.out.println( "WARNING munder context DOES NOT match!" );
+  }
+  //TO-DO more than one!
+  String start =  modOpen;
+  String indy = dirUnder;
+  String term = modTerm;
+  StringBuilder buf = new StringBuilder();
+  if (modifCtx.size() == 1){
+   buf.append( start );
+   buf.append( getNEM (ctx.getChild(1) ) );
+   buf.append( indy );
+   buf.append( getNEM (ctx.getChild(2) ) );
+   buf.append( term );
+   setNEM(ctx, buf.toString() );
+  } else if (modifCtx.size() == 2){
+   buf.append( getNEM (ctx.getChild(1) ) );
+   buf.append( indy );
+   //buf.append( indy );
+   buf.append( getNEM (ctx.getChild(2) ) );
+   setNEM(ctx, buf.toString() );
+  } else {
+   System.out.println( "munder nest not available: "+modifCtx.size() );
+   setNEM(ctx, "" );
+  }
+  
+  modifCtx.pop();
+}
 //===============================================
 //   Mroot and Msqrt processing starts here
 //===============================================
 @Override
  public void enterRootment(mmlParser.RootmentContext ctx) { 
  rootEls.push( ctx );
+ String strt = radical;
+ String term = radicalTerm;
 }
 
 @Override
@@ -564,6 +635,8 @@ public String checkParent( ParserRuleContext ctx,
    info = Numeric.transNum( ink, true );
   } else if (tokType.equals( "mi" )){
    info = Letter.transVar( ink, "" );
+  } else if (tokType.equals( "mo" )){
+   info = SpecialSymbol.getBraille( ink, "", spaceCmprSymbols );
   } else {
    info = ctx.getChild(1).getText()+
    ":"+ctx.getChild(textPos).getText();
@@ -585,17 +658,18 @@ public String checkParent( ParserRuleContext ctx,
   if (trace) System.out.println( " exitRowment" ); 
  String name = tagName( ctx );
  int cnt = ctx.getChildCount();
- System.out.println( "EXITING ROWMENT Text: "+ctx.getText()+
-    " no. of children: "+cnt );
+ //System.out.println( "EXITING ROWMENT Text: "+ctx.getText()+
+    //" no. of children: "+cnt );
+  System.out.println( "Rowment child count: "+cnt );
 
     StringBuilder buf = new StringBuilder();
-    buf.append( "{" );
+    if (addCurlies2Row) buf.append( "{" );
     buf.append( nem.get(ctx.getChild(1) ) );
     //for (int i=3; i<4;i++){
      //String tmp = ctx.getChild( i).getText();
      //buf.append( nem.get(ctx.getChild(i) ) );
     //}
-    buf.append( "}");
+    if (addCurlies2Row) buf.append( "}");
     System.out.println( "Row output: "+buf.toString() );
     setNEM( ctx, buf.toString() );
     return;
@@ -704,10 +778,11 @@ if (skipOld){
     }
 
     //System.out.println( "exitContent, parent: "+parentTag );
-    if (  parentTag.equals( "mrow" ) 
-       || parentTag.equals( "math" )
-       || parentTag.equals( "msqrt" )
-       || parentTag.equals( "mroot" )
+    if (  parentTag.startsWith( "mrow" ) 
+       || parentTag.startsWith( "math" )
+       || parentTag.startsWith( "msqrt" )
+       || parentTag.startsWith( "mroot" )
+       || parentTag.startsWith( "document" )
        ){
       StringBuilder buf = new StringBuilder();
       String childInfo;
@@ -715,6 +790,11 @@ if (skipOld){
         childName = tagName( ctx.getChild(i) );
         if (childName != null && !childName.equals( "justWS" )){
           childInfo = getNEM( ctx.getChild(i));
+if (childInfo == null){
+        System.out.println( "child--Name: "+childName+
+                 " Info: |"+childInfo+"|" );
+}
+  
           buf.append( childInfo );
           if (deContent){
             System.out.println( "child--Name: "+childName+
@@ -722,6 +802,7 @@ if (skipOld){
           }
         }
       }
+   System.out.println( "exitContent--trans: "+buf.toString() );
     setNEM( ctx, buf.toString() );
    } else {
      System.out.println( "exitContent, parent: "+parentTag );

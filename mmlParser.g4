@@ -41,31 +41,36 @@ rcontent     :   chardata?
 
 content     :   chardata?
                 ((fracment|supment|subment|subsupment|layment
+                   |underment
                   |rootment |sqrtment |rowment|tokment| element 
                   | reference | CDATA | PI | COMMENT)
                  chardata?)* ;
 
 fraccontent:  justWS? (fracment | supment |subment|subsupment
+              |underment
               |rootment  |sqrtment | layment|rowment|tokment| element ) justWS? ;
 basecontent:  justWS? (fracment | supment |subment|subsupment
-               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
-
-subcontent:  justWS? (fracment | supment |subment|subsupment
-               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
-
-supcontent:  justWS? (fracment | supment |subment|subsupment
-             |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
+              |underment
+              |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
+subcontent:   justWS? (fracment | supment |subment|subsupment
+              |underment
+              |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
+supcontent:   justWS? (fracment | supment |subment|subsupment
+              |underment
+              |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
                  
    //Just for now not dealing with attributes on my new elements
+
+underment   : munderStart (basecontent subcontent) munderEnd;
+munderStart : OPEN MUNDER attribute* '>' ;
+munderEnd   : OPEN SLASH MUNDER '>' ;
 
 supment     : msupStart (basecontent supcontent) msupEnd;
 msupStart   : OPEN MSUP attribute* '>' ;
 msupEnd     : OPEN SLASH MSUP '>' ;
-
 subment     : msubStart (basecontent subcontent) msubEnd;
 msubStart   : OPEN MSUB attribute* '>' ;
 msubEnd     : OPEN SLASH MSUB '>' ;
-
 subsupment  : msubsupStart (basecontent subcontent supcontent) msubsupEnd;
 msubsupStart :  OPEN MSUBSUP attribute* '>' ;
 msubsupEnd  : OPEN SLASH MSUBSUP '>' ;
@@ -95,7 +100,7 @@ mrowStart   : OPEN ROW attribute* '>' ;
 mrowEnd     : OPEN SLASH ROW '>' ;
 
 //Token elements can only have chardata as a child
-tokment     :   OPEN tok attribute* '>' chardata OPEN SLASH tok '>'
+tokment     :   OPEN tok attribute* '>' (chardata|reference)  OPEN SLASH tok '>'
             //|   '<' Name attribute* '/>'
             ;
 

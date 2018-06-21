@@ -98,6 +98,7 @@ MI          :   'mi';
 Name        :   NameStartChar NameChar* ;
 S           :   [ \t\r\n]               -> skip ;
 
+
 fragment
 HEXDIGIT    :   [a-fA-F0-9] ;
 

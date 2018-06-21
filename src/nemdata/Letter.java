@@ -35,7 +35,8 @@ public class Letter{
   new Letter( "z", "Z" )
  };
    //Hard-wired!!!!
- public static String singleCaps = ",";
+ public static final String singleCaps = ",";
+
  static boolean tableDone; // = makeTable( true );
 
  public static HashMap<String,String> inkLet2Brl = 
@@ -50,23 +51,29 @@ public class Letter{
   this.lcInk = lcInk;
   this.lcBrl = lcInk;
   this.ucInk = ucInk;
-  this.scUcBrl = singleCaps+lcBrl;
+  StringBuilder buf = new StringBuilder();
+  //buf.append( "," );
+  buf.append( singleCaps );
+  buf.append( lcBrl );
+  scUcBrl = buf.toString();
+  //System.out.println( "scUcBrl: "+buf.toString()+" "+scUcBrl );
  }
 
  String getLcInk(){ return lcInk; }
  String getLcBrl(){ return lcBrl; }
  String getUcInk(){ return ucInk; }
- String getScUcBrl(){ return scUcBrl; }
+ public String getScUcBrl(){ return scUcBrl; }
 
  public static boolean makeTable( boolean display ){
   //if (tableDone) return true;
-  System.out.println( "len: "+letters.length );
+  System.out.println( "len: "+letters.length+" sc: "+singleCaps );
   for (int l = 0; l<letters.length; l++){
    Letter let = letters[l];
    inkLet2Brl.put( let.getLcInk(), let.getLcBrl() );
    inkLet2Brl.put( let.getUcInk(), let.getScUcBrl() );
   }
-  if (display) System.out.println( "Letter table made." );
+  if (display) System.out.println( "Letter table made with X: "+
+     getBrl( "X" )  );
   return true;
  }
  static String getBrl( String key ){

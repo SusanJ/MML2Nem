@@ -81,6 +81,8 @@ public class Numeric{
    return true;
   }
   static String getBrl( String key ){
+   Numeric value = numericItems.get( key );
+   if (value == null) return "";
    return numericItems.get( key ).getBrl();
   }
   public static String transNum( String seq, boolean ni ){

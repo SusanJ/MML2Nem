@@ -34,8 +34,13 @@ public class Letter{
   new Letter( "y", "Y" ),
   new Letter( "z", "Z" )
  };
+
+ static boolean debug = false;
    //Hard-wired!!!!
  public static final String singleCaps = ",";
+
+ public static final String boldEngLetInd = "_;";
+ public static final String italicEngLetInd = ".;";
 
  static boolean tableDone; // = makeTable( true );
 
@@ -66,7 +71,9 @@ public class Letter{
 
  public static boolean makeTable( boolean display ){
   //if (tableDone) return true;
-  System.out.println( "len: "+letters.length+" sc: "+singleCaps );
+  if (display){
+   System.out.println( "len: "+letters.length+" sc: "+singleCaps );
+  }
   for (int l = 0; l<letters.length; l++){
    Letter let = letters[l];
    inkLet2Brl.put( let.getLcInk(), let.getLcBrl() );
@@ -79,15 +86,30 @@ public class Letter{
  static String getBrl( String key ){
    return inkLet2Brl.get( key );
  }
+
+ //TO-DO Greek letters, italic for English letters, bold for both
+ //Per Rule V, Sec. 32 d. it seems that in mathematical expressions the
+ // bold letter symbol is used for each letter [Note that the useage
+ // differs for digits and compound items]
  public static String transVar( String seq, String attributes ){
+   boolean bold = false;
+   if (attributes != null & debug ){
+    System.out.println( "Letter.transVar--atts|"+attributes+
+      "| def: "+Numeric.boldAtt);
+   }
+   if (attributes.equals( Numeric.boldAtt)){
+    System.out.println( "Letter.transVar -- bold attribute." );
+    bold = true;
+   }
    StringBuilder buf = new StringBuilder();
    String brl;
    for (int s=0; s<seq.length();s++){
     brl = getBrl( seq.substring(s,s+1));
     if (brl == null){
-     System.out.println( "Numeric--transNum(): Cannot find "+
+     System.out.println( "Letter.transVar(): Cannot find "+
        "braille for: |"+seq.substring(s,s+1));
     } else {
+     if (bold) buf.append( boldEngLetInd );
      buf.append( brl );
     }
    }

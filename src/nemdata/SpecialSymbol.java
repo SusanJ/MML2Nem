@@ -9,12 +9,35 @@ public class SpecialSymbol {
    per MathML attributes.
 */
 
- enum SymbolCategory {MISC, MULT_DIV, ADD_SUB, COMPARISON};
+ enum SymbolCategory {MISC, MULT_DIV, ADD_SUB, COMPARISON, REFEREMCE};
+
+ //The gen. ref. ind. is used for a footnote symbol in a 
+ //superscripted position in print--this is not a math msup 
+ //but rather an HTML <sup>.
+
+ //Rule VII Symbols  (TO-DO -- Finish!)
+ static final SpecialSymbol [] refTable = {
+  new SpecialSymbol("@]", "ref ind"), //General ref. indicator
+  new SpecialSymbol("_[", "&"), //Ampersand
+  new SpecialSymbol("@#", "*"), //Asterisk
+  new SpecialSymbol(".#", "#"), //Crosshatch
+  new SpecialSymbol("_]", "&#x2020;" ), //Dagger
+  new SpecialSymbol("_]]", "&#x2021;"), //Double dagger
+ };
+
+ //Braille symbols have unique char. appended to support
+ //correct use of N.I. to separate symbol from a following number
+static final SpecialSymbol [] xrefTable = {
+  new SpecialSymbol("@]{", "ref ind"), //General ref. indicator
+  new SpecialSymbol("_[{", "&"), //Ampersand
+  new SpecialSymbol("@#{", "*"), //Asterisk
+  new SpecialSymbol(".#{", "#"), //Crosshatch
+ };
 
  static final SpecialSymbol [] miscTable = {
 
    //Dots-456Rule XXII Miscellaneous Symbols
-  new SpecialSymbol("_<", "&#x02C6;"), //Circumflex (Caret)
+  new SpecialSymbol("_<", "ref"), //Circumflex (Caret)
   new SpecialSymbol("_%", "&#x02C7;"), //Caron (Inverted Caret)
   new SpecialSymbol("_8", "&#x2207"),   //Combining question mark
   new SpecialSymbol("_0", "&#x2207"),   //Empty set
@@ -66,7 +89,8 @@ public class SpecialSymbol {
   new SpecialSymbol( "$[--o", "&#x2195;" ),  // Up&dwn. pting arrow 
 
   new SpecialSymbol( ":", "&#x000AF;" ), //Overbar or macron
-
+  new SpecialSymbol( "(", "(" ),
+  new SpecialSymbol( ")", ")" ),
   new SpecialSymbol( "_4", "." )   //Period punctuation
  };
 
@@ -74,10 +98,10 @@ public class SpecialSymbol {
 
   new  SpecialSymbol( "+",    "+" ),          // Plus
      // Plus followed by multi-purp. ind.
-  new  SpecialSymbol( "+\"",  "+" ),   
-  new  SpecialSymbol( "_+",   "+" ),   // Bold plus 
+  //new  SpecialSymbol( "+\"",  "+" ),   
+  //new  SpecialSymbol( "_+",   "+" ),   // Bold plus 
     // Bold plus followed by multi-purp. ind.
-  new  SpecialSymbol( "_+\"", "+" ),   
+  //new  SpecialSymbol( "_+\"", "+" ),   
   new  SpecialSymbol( "+-",   "&#x00B1;" ),    // Plus-minus
   new  SpecialSymbol( "-+", "&#x2213;" ),  // Minus-plus
   //new  SpecialSymbol( "+\"-", "+-" ),        // Plus foll. by minus
@@ -86,14 +110,14 @@ public class SpecialSymbol {
   new  SpecialSymbol( "-",    "&#x2212;" ),  // Minus
     //Minus followed by multi-purp. ind.
   new  SpecialSymbol( "-\"",  "-" ),  
-  new  SpecialSymbol( "_-",   "-" ),  // Bold minus
+  //new  SpecialSymbol( "_-",   "-" ),  // Bold minus
     //Bold minus followed by multi-purp. ind.
-  new  SpecialSymbol( "_-\"", "-" ), 
+  //new  SpecialSymbol( "_-\"", "-" ), 
 
     //Division symbol Rule XXIV Sec. 180 c(8)
-  new  SpecialSymbol( "O",  ")" ), 
+  new  SpecialSymbol( "O",  "&#x27CC;" ), 
     //Division symbol Rule XXIV Sec. 180 c(8)     
-  new  SpecialSymbol( "o",  ")" ),     
+  new  SpecialSymbol( "o",  "&#x27CC;" ),     
   new  SpecialSymbol( "*",  "&#x22C5;" ),  //Dot operator
   new  SpecialSymbol( ">",  "&#x221A;" ),  //Tilde (or widetilde)
   new  SpecialSymbol( "@#", "*" )         //asterisk

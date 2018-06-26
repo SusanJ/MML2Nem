@@ -29,6 +29,8 @@ import java.util.regex.Pattern;
 import nemdata.Numeric;
 import nemdata.Letter;
 import nemdata.SpecialSymbol;
+import nemdata.Tape6;
+import nemdata.NIFixer;
 
 public class MMLproc extends mmlParserBaseListener {
 
@@ -36,10 +38,12 @@ public class MMLproc extends mmlParserBaseListener {
  static String [] fslash = {"", "/", ",/", ",,/" };
  static String [] fclose = {"", "#", ",#", ",,#" };
 
+ static Tape6 myOutput = new Tape6( "nemout.htm" );
+
   //Rule XIV Modifiers [or Limits]
  static String modOpen = "\"";
  static String dirUnder = "%";
- static String dirOver = "%";
+ static String dirOver = "&gt;";
  static String modTerm = "]";
  
 
@@ -50,7 +54,8 @@ public class MMLproc extends mmlParserBaseListener {
  static String radicalTerm = "]";
  static String [] radNest = {"", ".", "..", "...", "...." };
 
- static boolean trace = true;
+ static boolean boilerplate = true;
+ static boolean trace = false;
  static boolean debug = true;
  static boolean deContent = false;
  static boolean debugTokment = false;
@@ -60,14 +65,22 @@ public class MMLproc extends mmlParserBaseListener {
  static boolean debugSsub = false;
  static boolean debugSsup = false;
  static boolean addCurlies2Row = false;
+ static boolean check86b = true;
+ static boolean debugtcon = false;
+ static boolean showParseTree = false;
  String tag;
+ int munderCnt = 0;
+ int moverCnt = 0;
  int fracLev = 0;
  int scriptLev = 0;
 
  Stack<ParseTree>fracEls = new Stack<ParseTree>();
  Stack<ParseTree>rootEls = new Stack<ParseTree>();
  Stack<ParserRuleContext>scriptsCtx = new Stack<ParserRuleContext>();
- Stack<ParserRuleContext>modifCtx = new Stack<ParserRuleContext>();
+ Stack<ParserRuleContext>modunCtx = new Stack<ParserRuleContext>();
+ Stack<ParserRuleContext>modovCtx = new Stack<ParserRuleContext>();
+ Stack<String> overScripts = new  Stack<String>();
+
 
  Vocabulary VOCABULARY;
  static String[] ruleNames;
@@ -85,7 +98,7 @@ BufferedTokenStream allTokens;
    //String capX = fake.getScUcBrl();
    //System.out.println( "Single caps hard-wired in Letter: "+sc+
     //" X: "+capX );
-   Letter.makeTable( true );
+   Letter.makeTable( false );
    SpecialSymbol alsoFake = new SpecialSymbol( "~", "~" );
    SpecialSymbol.makeTables();
    //this.ruleNames = mmlParser.getRuleNames();
@@ -103,7 +116,13 @@ BufferedTokenStream allTokens;
    return nem.get( ctx );
   }
 //====================================================
-
+@Override
+ public void enterDocument(mmlParser.DocumentContext ctx) {
+ munderCnt = 0;
+ moverCnt = 0;
+ myOutput.out( "<h3>MathML to Nemeth Translation Examples</h3>" );
+  if (boilerplate) explain( true );
+}
 @Override
  public void exitDocument(mmlParser.DocumentContext ctx) { 
   if (trace) System.out.println( "exitDocument" );
@@ -127,11 +146,17 @@ public void exitMisc(mmlParser.MiscContext ctx){
   setNEM( ctx, "" );
 }
 @Override
+ public void enterPara(mmlParser.ParaContext ctx) { 
+  myOutput.out( "<p>"+ctx.getText()+"</p>" );
+}
+
+
+@Override
  public void exitInteger(mmlParser.IntegerContext ctx) {
   if (trace) System.out.println( "  exitInteger" );
   TerminalNode myIntNodes = ctx.INTEG();
   //Can check something about position sfor N.I. need?
-  if (debug) System.out.println( "exitInteger: "+ctx.getText() );
+  //if (debug) System.out.println( "exitInteger: "+ctx.getText() );
   //TO-DO TRANS!
   String num = ctx.getText();
   setNEM( ctx, num );
@@ -154,28 +179,64 @@ String parentName( ParseTree ctx ){
 String tagName( ParseTree ctx ){
  return tagName( ctx.getText() );
 }
+String tokContents( String text, String tok1, String tok2 ){
+ String res1 = tokContents( text, tok1 );
+ if (res1 != null) return res1;
+ return tokContents( text, tok2 );
+}
+
+//Extract contents from "<tok ...>contents</..."
+String tokContents( String text, String tok ){
+ if (debugtcon) System.out.println( "tcon: |"+text+"| |"+tok+"|" );
+ //StringBuilder buf = new StringBuilder( "<" );
+ //buf.append( tok );
+ String trimmed = text.trim();
+ String check = trimmed.substring(1,3);
+ System.out.println( "trimmed: "+trimmed+" check: "+check );
+ if (!check.equals( tok )) return null;
+ int send = trimmed.indexOf( ">" );
+ int estrt = trimmed .substring(send).indexOf( "<" )+send;
+ String extract = trimmed.substring( send+1, estrt );
+ if (debugtcon) System.out.println( "extract: "+extract );
+ return extract;
+}
  //Helper method for getting 'name' of an element
  //Assumes text is "<name> .... 
 String tagName( String text ){
- int gt = text.indexOf( ">" );
+ String trimmed = text.trim();
+ int gt = trimmed.indexOf( ">" );
  if (gt < 2 ) {
    // True if child is a terminal node
    //System.out.println( "tagName--LOGIC error--text: |"+text+"|" );
    //System.exit( 0 );
    return null;
  }
- if (!text.substring(0,1).equals("<")){
-  System.out.println( "Warning, bad test in tagName: "+text );
+ if (!trimmed.substring(0,1).equals("<")){
+  System.out.println( "Warning, bad test in tagName: "+trimmed );
   return "";
  }
- return text.substring(1,gt);
+ return trimmed.substring(1,gt);
 }
 @Override
  public void enterElement(mmlParser.ElementContext ctx) { 
   //if (trace) System.out.println( " enterElement" );
   String name=tagName( ctx.getText() );
-  if (name.equals( "math")) {
-     setNEM(ctx, ctx.getText() );
+   if (name.startsWith( "math")) {
+     StringBuilder buf = new StringBuilder();
+     String tmp = null;
+     for (int i=0; i<ctx.getChildCount(); i++){
+      tmp = ctx.getChild(i).getText();
+      System.out.println( "i: "+i+" text: |"+tmp+"|");
+      if (tmp.startsWith("disp")) buf.append(" " );
+      buf.append( tmp );
+    }
+      
+
+     //setNEM(ctx, ctx.getText() );
+     //TO-DO Fix N.I. useage for planar items
+     myOutput.out( "<p>Rendered MathML input: </br>" );
+     //myOutput.out(  ctx.getText()+"</p>"  );
+     myOutput.out( buf.toString()+"</p>"  );
      return; 
   }
   if (name.equals( "document" )) return;
@@ -186,9 +247,81 @@ String tagName( String text ){
 //   Munder, Mover, and Munderover processing starts here
 //========================================================
 @Override
+ public void enterUndoverment(mmlParser.UndovermentContext ctx) { 
+  if (trace) System.out.println( " enterUndoverment" ); 
+  munderCnt = munderCnt+1;
+  modunCtx.push( ctx );
+  moverCnt = moverCnt+1;
+  modovCtx.push( ctx );
+}
+@Override
+ public void exitUndoverment(mmlParser.UndovermentContext ctx) {
+  if (trace) System.out.println( " exitUndoverment" ); 
+  int cnt = ctx.getChildCount();
+  if (debugLimits){
+   System.out.println( "exitUndover--no. of children: "+cnt );
+  }
+  if (ctx == modunCtx.peek()){
+   if (debugLimits) System.out.println( "munderover under context matches!" );
+  } else {
+   System.out.println( "WARNING munderover under context DOES NOT match!" );
+  }
+  if (ctx == modovCtx.peek()){
+   if (debugLimits) System.out.println( "munderover over context matches!" );
+  } else {
+   System.out.println( "WARNING munderover over context DOES NOT match!" );
+  }
+  // Cnt is total munder+munderOver while size is number not yet done
+  //xorder is additional indicators needed
+  int xorderUn = munderCnt-modunCtx.size();
+  int xorderOv = moverCnt-modovCtx.size();
+  String start =  modOpen;
+  String indyUn = dirUnder;
+  for (int i=0; i<xorderUn; i++){
+   indyUn = indyUn+dirUnder;
+  }
+  String indyOv = dirOver;
+  for (int i=0; i<xorderOv; i++){
+   indyOv = indyOv+dirOver;
+  }
+  String term = modTerm;
+  StringBuilder buf = new StringBuilder();
+  //Outermost limit layout
+  if (modunCtx.size() == 1 && modovCtx.size() == 1){
+   System.out.println( "outer: indyOv: "+indyOv );
+   buf.append( start );
+   buf.append( getNEM (ctx.getChild(1) ) );
+   buf.append( indyUn );
+   buf.append( getNEM (ctx.getChild(2) ) );
+   
+   while (!overScripts.empty()){
+    buf.append( overScripts.pop() );
+    buf.append( indyOv );
+   buf.append( getNEM (ctx.getChild(3) ) );
+   }
+   buf.append( term );
+   System.out.println( "1 test: "+buf.toString() );
+   setNEM(ctx, buf.toString() );
+  } else {
+   System.out.println( "inner: indyOv: "+indyOv );
+   buf.append( getNEM (ctx.getChild(1) ) );
+   buf.append( indyUn );
+   buf.append( getNEM (ctx.getChild(2) ) );
+   //buf.append( indyOv );
+   overScripts.push( indyOv+getNEM(ctx.getChild(3) ) );
+   //buf.append( getNEM (ctx.getChild(3) ) );
+   System.out.println( "2 test: "+buf.toString() );
+   setNEM(ctx, buf.toString() );
+  }
+  modunCtx.pop();
+  modovCtx.pop();
+ }
+
+@Override
  public void enterUnderment(mmlParser.UndermentContext ctx) { 
   if (trace) System.out.println( " entertUnderment" );
-  modifCtx.push( ctx );
+  munderCnt = munderCnt+1;
+  modunCtx.push( ctx );
  }
      // <munder> base  underscript </munder>
 @Override
@@ -198,35 +331,132 @@ String tagName( String text ){
   if (debugLimits){
    System.out.println( "exitUnder--no. of children: "+cnt );
   }
-  if (ctx == modifCtx.peek()){
+  if (ctx == modunCtx.peek()){
    if (debugLimits) System.out.println( "munder context match!" );
   } else {
    System.out.println( "WARNING munder context DOES NOT match!" );
   }
-  //TO-DO more than one!
+  // Cnt is total munder+munderOver while size is number not yet done
+  //xorder is additional indicators needed
+  int xorder = munderCnt-modunCtx.size();
   String start =  modOpen;
   String indy = dirUnder;
+  for (int i=0; i<xorder; i++){
+   indy = indy+dirUnder;
+  }
   String term = modTerm;
   StringBuilder buf = new StringBuilder();
-  if (modifCtx.size() == 1){
+  if (modunCtx.size() == 1){
    buf.append( start );
    buf.append( getNEM (ctx.getChild(1) ) );
    buf.append( indy );
    buf.append( getNEM (ctx.getChild(2) ) );
    buf.append( term );
    setNEM(ctx, buf.toString() );
-  } else if (modifCtx.size() == 2){
+  } else {
    buf.append( getNEM (ctx.getChild(1) ) );
    buf.append( indy );
-   //buf.append( indy );
    buf.append( getNEM (ctx.getChild(2) ) );
    setNEM(ctx, buf.toString() );
+  //} else {
+   //System.out.println( "munder nest not available: "+modunCtx.size() );
+   //setNEM(ctx, "" );
+  }
+  modunCtx.pop();
+}
+
+@Override
+ public void enterOverment(mmlParser.OvermentContext ctx) { 
+  if (trace) System.out.println( " entertOverment" );
+  //Check for special case for overbar per Sec. 86 b.
+  //This can be mixed with std. use of 5-step
+  if (check86b){
+    String mac = tokContents( ctx.getChild(2).getText(), "mo" );
+    System.out.println( "extracted mac: "+mac );
+    System.out.println( "vartag: "+ctx.getChild(1).getText() );
+    System.out.println( "mactag: "+ctx.getChild(2).getText() );
+    String var = tokContents( ctx.getChild(1).getText(),
+         "mn", "mi" );
+    System.out.println( "chk86b--mac: "+mac+" var: "+var );
+    boolean isMac = false;
+    boolean is86b = false;
+    if (mac.equals( "&#x000AF;" )) isMac = true;
+    if (isMac){
+     if (var != null && var.length() == 1){
+      is86b = Character.isLetterOrDigit( var.charAt(0) );
+     }
+    } 
+    if (is86b){
+     System.out.println( "Need to use Sec. 86 b." );
+     //TO-DO  flag???
+     //String nemmac = var+":"+mac;
+     //Set flag so exitOverment will do special case
+     setNEM( ctx, "86b" );
+     return;
+    }
+  }
+  moverCnt = moverCnt+1;
+  modovCtx.push( ctx );
+ }
+     // <mover> base  overscript </mover>
+@Override
+ public void exitOverment(mmlParser.OvermentContext ctx) { 
+  if (trace) System.out.println( " exitOverment" );
+ 
+  int cnt = ctx.getChildCount();
+  if (debugLimits){
+   System.out.println( "exitOver--no. of children: "+cnt );
+  }
+  String mac = getNEM( ctx );
+  //Using contracted form for macron over single digit or letter
+  if (mac != null && mac.equals( "86b" )){
+    System.out.println( "exiOver -- contracted form for macron" );
+   StringBuilder sbuf = new StringBuilder();
+    //Check for #?
+   sbuf.append( getNEM (ctx.getChild(1) ) );
+   sbuf.append( getNEM (ctx.getChild(2) ) );
+   setNEM(ctx, sbuf.toString() );
+   return;
+  }
+  if (modovCtx.empty()){
+   System.out.println( "LOGIC ERROR--exitOverment" );
+   System.out.println( "modovCtx is empty!" );
+   System.exit( 0 );
+  }
+  if (ctx == modovCtx.peek()){
+   if (debugLimits) System.out.println( "mover context match!" );
   } else {
-   System.out.println( "munder nest not available: "+modifCtx.size() );
-   setNEM(ctx, "" );
+   System.out.println( "WARNING mover context DOES NOT match!" );
+  }
+  // Cnt is total movder+movderOver while size is number not yet done
+  //xorder is additional indicators needed
+  int xorder = moverCnt-modovCtx.size();
+  String start =  modOpen;
+  String indy = dirOver;
+  for (int i=0; i<xorder; i++){
+   indy = indy+dirOver;
+  }
+  String term = modTerm;
+  StringBuilder buf = new StringBuilder();
+  //Outermost uses all five steps of Nemeth Rule XIV, Sec. 86 a.
+  if (modovCtx.size() == 1){
+   buf.append( start );
+   buf.append( getNEM (ctx.getChild(1) ) );
+   buf.append( indy );
+   buf.append( getNEM (ctx.getChild(2) ) );
+   buf.append( term );
+   setNEM(ctx, buf.toString() );
+  } else {
+   buf.append( getNEM (ctx.getChild(1) ) );
+   buf.append( indy );
+   buf.append( getNEM (ctx.getChild(2) ) );
+   setNEM(ctx, buf.toString() );
+  //} else {
+   //System.out.println( "munder nest not available: "+modunCtx.size() );
+   //setNEM(ctx, "" );
   }
   
-  modifCtx.pop();
+  modovCtx.pop();
 }
 //===============================================
 //   Mroot and Msqrt processing starts here
@@ -603,7 +833,7 @@ public String checkParent( ParserRuleContext ctx,
 }
 @Override
  public void enterTokment(mmlParser.TokmentContext ctx) { 
- if (trace) System.out.println( " enterTokment" );
+ if (debugTokment) System.out.println( " enterTokment" );
  //Tagname of this element saved temporarily
  String name = tagName(ctx);
  setNEM( ctx, name );
@@ -624,19 +854,23 @@ public String checkParent( ParserRuleContext ctx,
  }
  
   int cnt = ctx.getChildCount();
+  String possAtt = "";
+  if (cnt > 8) possAtt = ctx.getChild(2).getText();
   //Count back from end always the same whether or not
   //there are attributes
   int textPos = cnt-5;
   String tokType = ctx.getChild(1).getText();
+  if (debugTokment) System.out.println( "tokType: |"+tokType+"|");
   String info = null;
   String ink = ctx.getChild( textPos ).getText();;
   if (tokType.equals( "mn" )){
    //System.out.println( "tokment mn input: "+ink );
-   info = Numeric.transNum( ink, true );
+   info = Numeric.transNum( ink, possAtt, true );
   } else if (tokType.equals( "mi" )){
-   info = Letter.transVar( ink, "" );
+   info = Letter.transVar( ink, possAtt );
   } else if (tokType.equals( "mo" )){
-   info = SpecialSymbol.getBraille( ink, "", spaceCmprSymbols );
+   if (debugTokment) System.out.println( "ss ink: |"+ink+"|");
+   info = SpecialSymbol.getBraille( ink, possAtt, spaceCmprSymbols );
   } else {
    info = ctx.getChild(1).getText()+
    ":"+ctx.getChild(textPos).getText();
@@ -644,7 +878,9 @@ public String checkParent( ParserRuleContext ctx,
     System.out.println( "tokment info: "+ctx.getChild(1).getText()+
        ":"+ctx.getChild(textPos).getText() );
    }
+  
   }
+ if (debugTokment) System.out.println( "tokment info: "+info );
  setNEM( ctx, info );
 }
 @Override
@@ -680,14 +916,21 @@ public String checkParent( ParserRuleContext ctx,
   String name=tagName( ctx.getText() ); 
   System.out.println( "\n      EXITING ELEMENT: "+name );   
  
-  if(name.equals( "math" )){
+  if(name.startsWith( "math" )){
     StringBuilder buf = new StringBuilder();
     int last = 4;   //ONLY WORKS IF MATH HAS ONE CHILD
-    for (int i=3; i<last;i++){
-     buf.append( nem.get(ctx.getChild(i) ) );
-    }
+  System.out.println( "math child cnt: "+ctx.getChildCount() );
+  int toSave = ctx.getChildCount()-5;
+  //for (int i=3; i<last;i++){
+     buf.append( nem.get(ctx.getChild(toSave) ) );
+  //}
     setNEM( ctx, buf.toString() );
     System.out.println( "$$$math element saved: "+buf.toString() );
+    String nembrl = NIFixer.fixNI4Linear(buf.toString());
+    myOutput.out( "<p>Nemeth translation: </br><span class=\"sm\">"+
+                 nembrl+"</span></br>" );
+    myOutput.out( "<span class=\"cn\">"+
+                 nembrl+"</span></p>");
     return;
    }
 if(name.equals( "document" )){
@@ -791,8 +1034,10 @@ if (skipOld){
         if (childName != null && !childName.equals( "justWS" )){
           childInfo = getNEM( ctx.getChild(i));
 if (childInfo == null){
+        if( deContent){
         System.out.println( "child--Name: "+childName+
                  " Info: |"+childInfo+"|" );
+        }
 }
   
           buf.append( childInfo );
@@ -802,18 +1047,44 @@ if (childInfo == null){
           }
         }
       }
-   System.out.println( "exitContent--trans: "+buf.toString() );
+   if( deContent) System.out.println( "exitContent--trans: "+buf.toString() );
     setNEM( ctx, buf.toString() );
    } else {
-     System.out.println( "exitContent, parent: "+parentTag );
+      if( deContent){
+       System.out.println( "exitContent, parent: "+parentTag );
+      }
    }
  }
+public static void explain( boolean shortOnly ){
+ myOutput.out( "<p>This"+
+  " translation of the MathML input to"+
+  " the Nemeth braille math output"+
+  " was produced automatically by "+
+  " <a href=\"https://github.com/SusanJ/MML2Nem\">MML2Nem</a>.</p>" );
+  if (shortOnly) return;
+  myOutput.out(
+  " <p>MML2Nem is a new  Java application that "+
+  " uses a two-step process"+
+  " to convert MathML to braille math."+
+  " The first step analyzes the MathML input"+
+  " using an ANTLR 4 parser for MathML. The parser was "+
+  " generated from a MathML grammar created for this project by"+
+  " extending Terence Parr's generic XML grammar."+
+  " The second step translates the parser output "+
+  " to braille using a  procedure implemented"+  
+  " in Java. "+ 
+  " (This webpage utilizes"+
+  " <a href=\"https://www.mathjax.org/\">MathJax<a> for"+
+  " rendering since MathJax can display MathML mathematics"+
+  " in any browser. Click on the rendered MathML for options to"+
+  " view the actual MathML input. )</p>"); 
+}
  
 //===========================================================
   public static void main( String[] args ) throws Exception {
 //===========================================================
 
- System.out.println( "\n    Welcome to MML Antlr Parser!" );
+ System.out.println( "\n    Welcome to MML2Nem Translator!" );
  
  String inputFile = null;
  CharStream input = null;
@@ -834,6 +1105,8 @@ if (childInfo == null){
   }
 
   //Tape6 myOutput = new Tape6( "uebout.txt" );
+    myOutput.mjHeader( "MML2Nem Test Page" );
+    myOutput.setAddFooter( true );
 
 /**  I. Connect input to lexer, have it create a token stream,
         provided token stream to parser and instruct parser to
@@ -854,8 +1127,10 @@ if (childInfo == null){
 */
          ParseTree tree = parser.document();
          String x = tree.toStringTree( parser);
-         System.out.println( "     PARSE TREE: ");
-         System.out.println( x );
+         if (showParseTree){
+          System.out.println( "     PARSE TREE: ");
+          System.out.println( x );
+         } 
         //myOutput.println( "     PARSE TREE: ");
         //wrap( tmpTree, 60, myOutput );
 
@@ -877,6 +1152,7 @@ if (childInfo == null){
      //System.out.println( bt.getBrl( tree ) );
 
      //myOutput.finish();
+     myOutput.finishTape6( true );  
 
  }//End Main.
 }//End Class MMLproc.

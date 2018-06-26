@@ -25,6 +25,9 @@ public class Numeric{
   static final String nemBoldSymInd = "_#";
   static final String nemItalSymInd = ".#";
   static final String numericIndicator = "#";
+   //Special (not ASCII Braille) character used to N.I. so
+   //later can delete those that aren't needed.
+  static final String tempNumericIndicator = "~";
   static boolean debug = false;
   static String ginky;
 
@@ -35,6 +38,7 @@ public class Numeric{
 
   //It's possible you can't have two tf's in Nemeth???
   static String smnTag     = "<mn>";
+  public static String boldAtt = "fontweight=\"bold\"";
   static String sBOLDmnTag = "<mn fontweight=\"bold\">";
   static String sITALmnTag = "<mn fontstyle=\"italic\">";
   static String sBOLDITALmnTag = 
@@ -44,7 +48,7 @@ public class Numeric{
   static HashMap<String,Numeric> numericItems =
      new HashMap<String,Numeric>();
 
-  static boolean tableDone = makeTable( true );
+  static boolean tableDone = makeTable( false );
 
   String brl;
   String boldBrl;
@@ -85,9 +89,17 @@ public class Numeric{
    if (value == null) return "";
    return numericItems.get( key ).getBrl();
   }
+//MAIN ENTRY for TRANSLATION
+  public static String transNum( String seq, 
+      String att, boolean tempNi ){
+   if (att.equals( boldAtt)){
+    System.out.println( "Numeric.transNum -- bold attribute." );
+   }
+   return transNum( seq, tempNi );
+  }
   public static String transNum( String seq, boolean ni ){
    StringBuilder buf = new StringBuilder();
-   if (ni) buf.append( numericIndicator );
+   if (ni) buf.append( tempNumericIndicator );
    String brl;
    for (int s=0; s<seq.length();s++){
     brl = getBrl( seq.substring(s,s+1));

@@ -40,23 +40,23 @@ rcontent     :   chardata?
                  chardata?)+ ;
 
 content     :   chardata?
-                ((fracment|supment|subment|subsupment|layment
-                   |underment
+                ((para |fracment|supment|subment|subsupment|layment
+                   |underment|overment|undoverment
                   |rootment |sqrtment |rowment|tokment| element 
                   | reference | CDATA | PI | COMMENT)
                  chardata?)* ;
 
 fraccontent:  justWS? (fracment | supment |subment|subsupment
-              |underment
+              |underment|overment|undoverment
               |rootment  |sqrtment | layment|rowment|tokment| element ) justWS? ;
 basecontent:  justWS? (fracment | supment |subment|subsupment
-              |underment
+              |underment|overment|undoverment
               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
 subcontent:   justWS? (fracment | supment |subment|subsupment
-              |underment
+              |underment|overment|undoverment
               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
 supcontent:   justWS? (fracment | supment |subment|subsupment
-              |underment
+              |underment|overment|undoverment
               |rootment |sqrtment | layment|rowment|tokment| element ) justWS? ;
                  
    //Just for now not dealing with attributes on my new elements
@@ -64,6 +64,14 @@ supcontent:   justWS? (fracment | supment |subment|subsupment
 underment   : munderStart (basecontent subcontent) munderEnd;
 munderStart : OPEN MUNDER attribute* '>' ;
 munderEnd   : OPEN SLASH MUNDER '>' ;
+overment    : moverStart (basecontent supcontent) moverEnd;
+moverStart  : OPEN MOVER attribute* '>' ;
+moverEnd    : OPEN SLASH MOVER '>' ;
+undoverment     : munderoverStart (basecontent subcontent supcontent) munderoverEnd;
+munderoverStart : OPEN MUNDEROVER attribute* '>' ;
+munderoverEnd   : OPEN SLASH MUNDEROVER '>' ;
+
+
 
 supment     : msupStart (basecontent supcontent) msupEnd;
 msupStart   : OPEN MSUP attribute* '>' ;
@@ -103,7 +111,9 @@ mrowEnd     : OPEN SLASH ROW '>' ;
 tokment     :   OPEN tok attribute* '>' (chardata|reference)  OPEN SLASH tok '>'
             //|   '<' Name attribute* '/>'
             ;
-
+para        : paraStart (content) paraEnd;
+paraStart   : OPEN PARA attribute* '>';
+paraEnd     : OPEN SLASH PARA '>';
 
 //element     :   (OPEN|MY_OPEN) Name attribute* '>' content OPEN  SLASH Name '>'
            // |   (OPEN|MY_OPEN) Name attribute* '/>'

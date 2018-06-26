@@ -90,11 +90,14 @@ MSUB        :   'msub';
 MSQRT       :   'msqrt';
 MROOT       :   'mroot';
 MUNDER      :   'munder';
-LAY         :   'mover'|'munderover';
+MOVER       :   'mover';
+MUNDEROVER  :   'munderover';
+LAY         :   'mmultiscripts';
 ROW         :   'mrow';
 MO          :   'mo';
 MN          :   'mn';
-MI          :   'mi'; 
+MI          :   'mi';
+PARA        :   'para'; 
 Name        :   NameStartChar NameChar* ;
 S           :   [ \t\r\n]               -> skip ;
 
